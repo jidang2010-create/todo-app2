@@ -1,79 +1,549 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>모바일 To-Do 앱</title>
-<style>
-  body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
-  h2 { text-align: center; }
-  #taskInput { width: 70%; padding: 15px; font-size: 18px; }
-  #addBtn { padding: 15px; font-size: 18px; margin-left: 5px; }
-  ul { list-style: none; padding: 0; }
-  li { background: #fff; margin: 10px 0; padding: 15px; font-size: 18px; 
-       border-radius: 10px; display: flex; justify-content: space-between; 
-       align-items: center; touch-action: pan-y; }
-  .done { text-decoration: line-through; color: gray; }
-  .deleteBtn { background: red; color: white; border: none; padding: 10px 15px; 
-               border-radius: 5px; font-size: 16px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JAY 할 일 기록장</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f6f7fb;
+      color: #222;
+    }
+    .wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 20px 14px 40px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+    .sub {
+      margin: 0;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .top-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .stat {
+      background: #f8f9ff;
+      border: 1px solid #eceefd;
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .stat-title {
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .form-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1.6fr 1fr 1fr;
+      margin-top: 14px;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid #d9dce8;
+      padding: 12px;
+      font-size: 15px;
+      background: #fff;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+    button {
+      border: none;
+      background: #1f2937;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #eef2ff;
+      color: #243b6b;
+      border: 1px solid #d9e1ff;
+    }
+    button.danger {
+      background: #fff1f1;
+      color: #a12626;
+      border: 1px solid #ffd2d2;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .filters input, .filters select {
+      flex: 1 1 180px;
+    }
+    ul {
+      list-style: none;
+      margin: 14px 0 0;
+      padding: 0;
+    }
+    .task-item {
+      border: 1px solid #ececec;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+    .task-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .task-title {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+    .done .task-title {
+      text-decoration: line-through;
+      color: #888;
+    }
+    .meta {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .memo {
+      margin-top: 8px;
+      padding: 10px;
+      background: #f8f8fb;
+      border-radius: 10px;
+      color: #444;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+    .tag {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 6px;
+      background: #eef2ff;
+      color: #334155;
+    }
+    .tag.high { background: #ffe7e7; color: #a12626; }
+    .tag.medium { background: #fff4df; color: #9a5b00; }
+    .tag.low { background: #e8f7eb; color: #1f7a39; }
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .empty {
+      color: #777;
+      text-align: center;
+      padding: 20px 0 10px;
+    }
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+    .small {
+      font-size: 13px;
+      color: #777;
+    }
+    @media (max-width: 700px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .task-head {
+        flex-direction: column;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="card">
+      <h1>JAY 할 일 기록장</h1>
+      <p class="sub">할 일을 적고, 완료하면 기록으로 남기고, 브라우저에 자동 저장되는 버전이야. 같은 기기에서는 앱을 닫아도 내용이 남아 있어.</p>
+      <div class="top-grid">
+        <div class="stat">
+          <div class="stat-title">전체</div>
+          <div class="stat-value" id="totalCount">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-title">진행 중</div>
+          <div class="stat-value" id="activeCount">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-title">완료</div>
+          <div class="stat-value" id="doneCount">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-title">기록 보관</div>
+          <div class="stat-value" id="archivedCount">0</div>
+        </div>
+      </div>
+    </div>
 
-<h2>내 할일 목록</h2>
-<div style="display:flex; justify-content:center;">
-  <input type="text" id="taskInput" placeholder="할일 입력">
-  <button id="addBtn">추가</button>
-</div>
+    <div class="card">
+      <h2 class="section-title">새 할 일 추가</h2>
+      <div class="form-grid">
+        <input id="taskInput" type="text" placeholder="할 일을 입력해줘" />
+        <input id="dateInput" type="date" />
+        <select id="priorityInput">
+          <option value="medium">중간 우선순위</option>
+          <option value="high">높은 우선순위</option>
+          <option value="low">낮은 우선순위</option>
+        </select>
+      </div>
+      <div style="margin-top:10px;">
+        <textarea id="memoInput" placeholder="메모나 기록을 적어도 돼. 예: 준비물, 진행상황, 떠오른 생각"></textarea>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button onclick="addTask()">추가하기</button>
+        <button class="secondary" onclick="exportData()">백업 저장</button>
+        <button class="secondary" onclick="document.getElementById('importFile').click()">백업 불러오기</button>
+        <input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)" />
+      </div>
+      <p class="small" style="margin-top:10px;">백업 저장은 다른 기기로 옮길 때 유용해. 그냥 자동 저장만으로는 기기끼리 동기화되지는 않아.</p>
+    </div>
 
-<ul id="taskList"></ul>
+    <div class="card">
+      <h2 class="section-title">진행 중인 할 일</h2>
+      <div class="filters">
+        <input id="searchInput" type="text" placeholder="검색" oninput="render()" />
+        <select id="statusFilter" onchange="render()">
+          <option value="all">전체 보기</option>
+          <option value="active">진행 중만</option>
+          <option value="done">완료만</option>
+        </select>
+        <select id="sortFilter" onchange="render()">
+          <option value="newest">최신순</option>
+          <option value="oldest">오래된순</option>
+          <option value="due">마감일순</option>
+          <option value="priority">우선순위순</option>
+        </select>
+      </div>
+      <ul id="taskList"></ul>
+    </div>
 
-<script>
-const taskList = document.getElementById('taskList');
-const taskInput = document.getElementById('taskInput');
-const addBtn = document.getElementById('addBtn');
+    <div class="card">
+      <h2 class="section-title">기록 보관함</h2>
+      <p class="small">완료 후 보관한 항목이 여기 쌓여. 나중에 다시 꺼내 볼 수 있어.</p>
+      <ul id="archiveList"></ul>
+    </div>
+  </div>
 
-addBtn.onclick = addTask;
-taskInput.addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') addTask();
-});
+  <script>
+    const STORAGE_KEY = 'jay_todo_archive_app_v2';
 
-function addTask() {
-  const taskText = taskInput.value.trim();
-  if (!taskText) return;
+    let data = {
+      tasks: [],
+      archive: []
+    };
 
-  const li = document.createElement('li');
-  li.textContent = taskText;
+    function loadData() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          data = JSON.parse(saved);
+        } catch (e) {
+          console.error('저장 데이터 읽기 실패', e);
+        }
+      }
+    }
 
-  // 완료 토글
-  li.onclick = function() { li.classList.toggle('done'); }
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
 
-  // 삭제 버튼
-  const delBtn = document.createElement('button');
-  delBtn.textContent = '삭제';
-  delBtn.className = 'deleteBtn';
-  delBtn.onclick = function(e) {
-    e.stopPropagation();
-    li.remove();
-  }
+    function formatDate(dateStr) {
+      if (!dateStr) return '날짜 없음';
+      return dateStr;
+    }
 
-  li.appendChild(delBtn);
-  taskList.appendChild(li);
-  taskInput.value = '';
-}
+    function priorityLabel(priority) {
+      if (priority === 'high') return '높음';
+      if (priority === 'low') return '낮음';
+      return '중간';
+    }
 
-// 간단 스와이프 삭제 (좌우 스와이프 시 삭제)
-let startX;
-taskList.addEventListener('touchstart', e => startX = e.touches[0].clientX);
-taskList.addEventListener('touchend', e => {
-  const endX = e.changedTouches[0].clientX;
-  const diffX = endX - startX;
-  if (Math.abs(diffX) > 100) {
-    const li = e.target.closest('li');
-    if (li) li.remove();
-  }
-});
-</script>
+    function addTask() {
+      const title = document.getElementById('taskInput').value.trim();
+      const dueDate = document.getElementById('dateInput').value;
+      const priority = document.getElementById('priorityInput').value;
+      const memo = document.getElementById('memoInput').value.trim();
 
+      if (!title) {
+        alert('할 일을 먼저 적어줘.');
+        return;
+      }
+
+      const task = {
+        id: Date.now(),
+        title,
+        dueDate,
+        priority,
+        memo,
+        done: false,
+        createdAt: new Date().toISOString(),
+        completedAt: null
+      };
+
+      data.tasks.unshift(task);
+      saveData();
+      document.getElementById('taskInput').value = '';
+      document.getElementById('dateInput').value = '';
+      document.getElementById('priorityInput').value = 'medium';
+      document.getElementById('memoInput').value = '';
+      render();
+    }
+
+    function toggleDone(id) {
+      const task = data.tasks.find(t => t.id === id);
+      if (!task) return;
+      task.done = !task.done;
+      task.completedAt = task.done ? new Date().toISOString() : null;
+      saveData();
+      render();
+    }
+
+    function archiveTask(id) {
+      const index = data.tasks.findIndex(t => t.id === id);
+      if (index === -1) return;
+      const [task] = data.tasks.splice(index, 1);
+      task.archivedAt = new Date().toISOString();
+      data.archive.unshift(task);
+      saveData();
+      render();
+    }
+
+    function restoreTask(id) {
+      const index = data.archive.findIndex(t => t.id === id);
+      if (index === -1) return;
+      const [task] = data.archive.splice(index, 1);
+      task.archivedAt = null;
+      data.tasks.unshift(task);
+      saveData();
+      render();
+    }
+
+    function deleteTask(id, fromArchive = false) {
+      const ok = confirm('이 항목을 삭제할까?');
+      if (!ok) return;
+      if (fromArchive) {
+        data.archive = data.archive.filter(t => t.id !== id);
+      } else {
+        data.tasks = data.tasks.filter(t => t.id !== id);
+      }
+      saveData();
+      render();
+    }
+
+    function editTask(id) {
+      const task = data.tasks.find(t => t.id === id);
+      if (!task) return;
+
+      const newTitle = prompt('할 일 제목 수정', task.title);
+      if (newTitle === null) return;
+      const trimmedTitle = newTitle.trim();
+      if (!trimmedTitle) {
+        alert('제목은 비워둘 수 없어.');
+        return;
+      }
+
+      const newMemo = prompt('메모 수정', task.memo || '');
+      if (newMemo === null) return;
+
+      task.title = trimmedTitle;
+      task.memo = newMemo.trim();
+      saveData();
+      render();
+    }
+
+    function exportData() {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const today = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `jay_todo_backup_${today}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!imported.tasks || !imported.archive) {
+            alert('백업 파일 형식이 맞지 않아.');
+            return;
+          }
+          data = imported;
+          saveData();
+          render();
+          alert('백업 파일을 불러왔어.');
+        } catch (err) {
+          alert('파일을 읽지 못했어.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function getFilteredTasks() {
+      const search = document.getElementById('searchInput').value.trim().toLowerCase();
+      const status = document.getElementById('statusFilter').value;
+      const sort = document.getElementById('sortFilter').value;
+
+      let tasks = [...data.tasks];
+
+      if (search) {
+        tasks = tasks.filter(task =>
+          task.title.toLowerCase().includes(search) ||
+          (task.memo || '').toLowerCase().includes(search)
+        );
+      }
+
+      if (status === 'active') tasks = tasks.filter(t => !t.done);
+      if (status === 'done') tasks = tasks.filter(t => t.done);
+
+      tasks.sort((a, b) => {
+        if (sort === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
+        if (sort === 'due') {
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return a.dueDate.localeCompare(b.dueDate);
+        }
+        if (sort === 'priority') {
+          const order = { high: 0, medium: 1, low: 2 };
+          return order[a.priority] - order[b.priority];
+        }
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+
+      return tasks;
+    }
+
+    function renderStats() {
+      document.getElementById('totalCount').textContent = data.tasks.length;
+      document.getElementById('activeCount').textContent = data.tasks.filter(t => !t.done).length;
+      document.getElementById('doneCount').textContent = data.tasks.filter(t => t.done).length;
+      document.getElementById('archivedCount').textContent = data.archive.length;
+    }
+
+    function render() {
+      renderStats();
+      const taskList = document.getElementById('taskList');
+      const archiveList = document.getElementById('archiveList');
+      const filtered = getFilteredTasks();
+
+      taskList.innerHTML = '';
+      archiveList.innerHTML = '';
+
+      if (filtered.length === 0) {
+        taskList.innerHTML = '<div class="empty">표시할 할 일이 아직 없어.</div>';
+      } else {
+        filtered.forEach(task => {
+          const li = document.createElement('li');
+          li.className = `task-item ${task.done ? 'done' : ''}`;
+          li.innerHTML = `
+            <div class="task-head">
+              <div>
+                <div class="task-title">${escapeHtml(task.title)}</div>
+                <div class="meta">
+                  <span class="tag ${task.priority}">${priorityLabel(task.priority)}</span>
+                  생성일: ${task.createdAt.slice(0, 10)}<br>
+                  마감일: ${formatDate(task.dueDate)}
+                  ${task.completedAt ? `<br>완료일: ${task.completedAt.slice(0, 10)}` : ''}
+                </div>
+              </div>
+            </div>
+            ${task.memo ? `<div class="memo">${escapeHtml(task.memo)}</div>` : ''}
+            <div class="actions">
+              <button class="secondary" onclick="toggleDone(${task.id})">${task.done ? '완료 해제' : '완료 체크'}</button>
+              <button class="secondary" onclick="editTask(${task.id})">수정</button>
+              <button class="secondary" onclick="archiveTask(${task.id})">기록 보관</button>
+              <button class="danger" onclick="deleteTask(${task.id})">삭제</button>
+            </div>
+          `;
+          taskList.appendChild(li);
+        });
+      }
+
+      if (data.archive.length === 0) {
+        archiveList.innerHTML = '<div class="empty">보관된 기록이 아직 없어.</div>';
+      } else {
+        data.archive.forEach(task => {
+          const li = document.createElement('li');
+          li.className = 'task-item';
+          li.innerHTML = `
+            <div class="task-head">
+              <div>
+                <div class="task-title">${escapeHtml(task.title)}</div>
+                <div class="meta">
+                  <span class="tag ${task.priority}">${priorityLabel(task.priority)}</span>
+                  생성일: ${task.createdAt ? task.createdAt.slice(0, 10) : '-'}<br>
+                  완료일: ${task.completedAt ? task.completedAt.slice(0, 10) : '-'}<br>
+                  보관일: ${task.archivedAt ? task.archivedAt.slice(0, 10) : '-'}
+                </div>
+              </div>
+            </div>
+            ${task.memo ? `<div class="memo">${escapeHtml(task.memo)}</div>` : ''}
+            <div class="actions">
+              <button class="secondary" onclick="restoreTask(${task.id})">다시 꺼내기</button>
+              <button class="danger" onclick="deleteTask(${task.id}, true)">영구 삭제</button>
+            </div>
+          `;
+          archiveList.appendChild(li);
+        });
+      }
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    loadData();
+    render();
+  </script>
 </body>
 </html>
