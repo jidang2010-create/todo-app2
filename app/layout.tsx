@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://jay-dot-curious.jidang2010.chatgpt.site"),
   title: "Jay Dot — 좋아하는 걸 배우는 사람",
   description: "AI 아트, 영상, 바이브코딩을 배우며 작은 관심사를 연결하는 Jay Dot의 브랜드 페이지.",
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
